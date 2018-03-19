@@ -1,4 +1,59 @@
-const {convertAwsLocalCrontabToAwsUtcCrontab} = require('./cron.js');
+const {localCrontabToUtcCrontabs} = require('local-crontab');
+
+
+/**
+ * Convert an AWS CloudWatch crontab to a standard crontab.
+ *
+ * Main differences are:
+ *    * A year field
+ *    * ? instead of * sometimes
+ *    * Some others.. implementation TBD
+ *
+ *  The data that is removed is returned as well so that it can be used to
+ *  roundtrip back to an AWS CloudWatch crontab
+ *
+ */
+const convertAwsToStandardCrontab = (awsCrontab) => {
+  const crontabParts = awsCrontab.split(/\s+/);
+
+  // standard crontabs don't have a year
+  const year = crontabParts.pop();
+
+  // replace ? with *, but remember where they were
+  const questionParts = [];
+  for (const i in crontabParts) {
+    if (crontabParts[i] === '?') {
+      questionParts.push(i);
+      crontabParts[i] = '*';
+    }
+  }
+
+  return {
+    crontab: crontabParts.join(' '),
+    awsSpecificDetails: {
+      year,
+      questionParts,
+    },
+  };
+};
+
+
+const convertStandardCrontabToAws = ({crontab, awsSpecificDetails}) => {
+  const parts = crontab.split(/\s+/);
+  for (const questionPart of awsSpecificDetails.questionParts) {
+    parts[questionPart] = parts[questionPart].replace(/\*/, '?');
+  }
+  parts.push(awsSpecificDetails.year);
+  return parts.join(' ');
+};
+
+
+const convertAwsLocalCrontabToAwsUtcCrontab = (localCrontab, timezone) => {
+  const {crontab, awsSpecificDetails} = convertAwsToStandardCrontab(localCrontab);
+  const utcCrontabs = localCrontabToUtcCrontabs(crontab, timezone);
+  return utcCrontabs.map((crontab) => convertStandardCrontabToAws({crontab, awsSpecificDetails}))
+};
+
 
 function convertCrontabs() {
   for (const funcName in this.serverless.service.functions) {

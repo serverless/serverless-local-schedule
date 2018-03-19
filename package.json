@@ -25,9 +25,6 @@
   },
   "homepage": "https://github.com/unitedincome.com/serverless-local-schedule#readme",
   "dependencies": {
-    "cron-converter": "0.0.12",
-    "deep-equal": "^1.0.1",
-    "timezone-js": "^0.4.13",
-    "tzdata": "^1.0.9"
+    "local-crontab": "^0.1.0"
   }
 }
