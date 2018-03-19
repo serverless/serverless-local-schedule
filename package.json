@@ -25,6 +25,6 @@
   },
   "homepage": "https://github.com/unitedincome.com/serverless-local-schedule#readme",
   "dependencies": {
-    "local-crontab": "^0.1.0"
+    "local-crontab": "^0.1.6"
   }
 }
