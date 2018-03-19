@@ -1,5 +1,7 @@
 # Serverless Local Schedule
 [![serverless](http://public.serverless.com/badges/v3.svg)](http://www.serverless.com)
+[![npm](https://img.shields.io/npm/v/serverless-local-schedule.svg)](https://www.npmjs.com/package/serverless-local-schedule)
+
 
 This plugin allows you to specify a timezone on your lambdas triggered by AWS CloudWatch Events.
 
