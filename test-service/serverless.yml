@@ -1,0 +1,15 @@
+service: test-service
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+
+plugins:
+  - serverless-local-schedule
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - schedule: cron(0 10 * * ? *)
+        timezone: America/New_York
