@@ -5,6 +5,11 @@
 
 This plugin allows you to specify a timezone on your lambdas triggered by AWS CloudWatch Events.
 
+To install:
+```
+sls plugin install -n serverless-local-schedule
+```
+
 For example:
 ```yaml
 functions:
