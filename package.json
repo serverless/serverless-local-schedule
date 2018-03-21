@@ -1,6 +1,6 @@
 {
   "name": "serverless-local-schedule",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Allows defining CloudWatch schedules in local timezones(with DST!) in serverless events",
   "main": "index.js",
   "scripts": {
@@ -25,6 +25,6 @@
   },
   "homepage": "https://github.com/unitedincome.com/serverless-local-schedule#readme",
   "dependencies": {
-    "local-crontab": "^0.1.6"
+    "local-crontab": "^0.1.7"
   }
 }
