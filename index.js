@@ -56,21 +56,29 @@ const convertAwsLocalCrontabToAwsUtcCrontab = (localCrontab, timezone) => {
 
 
 function convertCrontabs() {
+  this.serverless.cli.log('Converting local crontabs to UTC crontabs...');
   for (const funcName in this.serverless.service.functions) {
     for (const eventIndex in this.serverless.service.functions[funcName].events) {
       const event = this.serverless.service.functions[funcName].events[eventIndex];
       // only process events with a schedule & a timezone
-      if (event.hasOwnProperty('schedule') && event.hasOwnProperty('timezone')) {
-        const match = event.schedule.match(/^cron\((.*)\)$/);
+      if (event.hasOwnProperty('schedule') && event.schedule.hasOwnProperty('timezone')) {
+        const schedule = event.schedule;
+        const match = schedule.rate.match(/^cron\((.*)\)$/);
         if (!match) // skip rate() schedules
           continue;
         // convert the local crontab to utc crontabs
-        const newCrontabs = convertAwsLocalCrontabToAwsUtcCrontab(match[1], event.timezone);
+        const newCrontabs = convertAwsLocalCrontabToAwsUtcCrontab(match[1], schedule.timezone);
         // remove the original schedule event
         this.serverless.service.functions[funcName].events.splice(eventIndex, 1);
+        if (this.options.verbose || this.options.v) {
+          this.serverless.cli.log(`Converted ${match[1]} ${schedule.timezone} to
+               ${newCrontabs.join('\n               ')}`);
+        }
+        // remove timezone from original schedule event
+        delete schedule.timezone;
         // append new utc crontab schedule events
         this.serverless.service.functions[funcName].events.push(...newCrontabs.map((crontab) => ({
-          schedule: `cron(${crontab})`,
+          schedule: Object.assign(schedule, {rate: `cron(${crontab})`}),
         })))
       }
     }

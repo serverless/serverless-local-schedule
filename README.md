@@ -16,8 +16,9 @@ functions:
   hello:
     handler: handler.hello
     events:
-      - schedule: cron(0 10 * * ? *)
-        timezone: America/New_York
+      - schedule:
+          rate: cron(0 10 * * ? *)
+          timezone: America/New_York
 ```
 
 It works by converting that into 6 different schedules, effectively the same as having the following
@@ -27,10 +28,18 @@ functions:
   hello:
     handler: handler.hello
     events:
-      - schedule: cron(0 15 * 1-2,12 ? *) # full non-DST months
-      - schedule: cron(0 15 1-10 3 ? *) # non-DST portion of March
-      - schedule: cron(0 14 11-31 3 ? *) # DST portion of March
-      - schedule: cron(0 14 * 4-10 ? *) # full DST months
-      - schedule: cron(0 14 1-3 11 ? *) # DST portion of November
-      - schedule: cron(0 15 4-31 11 ? *) # non-DST portion of November
+      - schedule:
+          rate: cron(0 15 * 1-2,12 ? *) # full non-DST months
+      - schedule:
+          rate: cron(0 16 1-10 3 ? *) # non-DST portion of March
+      - schedule:
+          rate: cron(0 14 11-31 3 ? *) # DST portion of March
+      - schedule:
+          rate: cron(0 14 * 4-10 ? *) # full DST months
+      - schedule:
+          rate: cron(0 14 1-3 11 ? *) # DST portion of November
+      - schedule:
+          rate: cron(0 15 4-31 11 ? *) # non-DST portion of November
 ```
+
+**NOTE:** the `- schedule: cron(** * * ? *)` short syntax isn't supported.
