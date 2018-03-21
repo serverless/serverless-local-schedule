@@ -11,5 +11,6 @@ functions:
   hello:
     handler: handler.hello
     events:
-      - schedule: cron(0 10 * * ? *)
-        timezone: America/New_York
+      - schedule:
+          rate: cron(0 10 * * ? *)
+          timezone: America/New_York
