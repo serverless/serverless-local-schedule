@@ -78,7 +78,7 @@ function convertCrontabs() {
         delete schedule.timezone;
         // append new utc crontab schedule events
         this.serverless.service.functions[funcName].events.push(...newCrontabs.map((crontab) => ({
-          schedule: Object.assign(schedule, {rate: `cron(${crontab})`}),
+          schedule: Object.assign({}, schedule, {rate: `cron(${crontab})`}),
         })))
       }
     }
