@@ -42,4 +42,4 @@ functions:
           rate: cron(0 15 4-31 11 ? *) # non-DST portion of November
 ```
 
-**NOTE:** the `- schedule: cron(** * * ? *)` short syntax isn't supported.
+**NOTE:** the `- schedule: cron(* * * * ? *)` short syntax isn't supported.
