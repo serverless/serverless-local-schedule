@@ -31,7 +31,7 @@ functions:
       - schedule:
           rate: cron(0 15 * 1-2,12 ? *) # full non-DST months
       - schedule:
-          rate: cron(0 16 1-10 3 ? *) # non-DST portion of March
+          rate: cron(0 15 1-10 3 ? *) # non-DST portion of March
       - schedule:
           rate: cron(0 14 11-31 3 ? *) # DST portion of March
       - schedule:
