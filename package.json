@@ -4,7 +4,9 @@
   "description": "Allows defining CloudWatch schedules in local timezones(with DST!) in serverless events",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "prettier -l index.js || (echo need formatting ; exit 1)",
+    "format": "prettier --write index.js"
   },
   "repository": {
     "type": "git",
@@ -26,5 +28,8 @@
   "homepage": "https://github.com/unitedincome/serverless-local-schedule#readme",
   "dependencies": {
     "local-crontab": "^0.1.7"
+  },
+  "devDependencies": {
+    "prettier": "*"
   }
 }
