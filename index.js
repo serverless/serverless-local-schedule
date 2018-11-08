@@ -93,8 +93,11 @@ function convertCrontabs() {
         };
         newCrontabsMap[funcName].removeIndexes.splice(0, 0, eventIndex);
         newCrontabsMap[funcName].newCrontabs.push(
-          ...newCrontabs.map(crontab => ({
-            schedule: Object.assign({}, schedule, { rate: `cron(${crontab})` })
+          ...newCrontabs.map((crontab, i) => ({
+            schedule: Object.assign({}, schedule, {
+              rate: `cron(${crontab})`,
+              name: schedule.name && `${schedule.name}-${i}`
+            })
           }))
         );
       }

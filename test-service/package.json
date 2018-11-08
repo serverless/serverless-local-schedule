@@ -9,6 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "serverless-local-schedule": "file:.."
+    "serverless-local-schedule": "*"
   }
 }
