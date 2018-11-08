@@ -57,6 +57,7 @@ const convertAwsLocalCrontabToAwsUtcCrontab = (localCrontab, timezone) => {
 
 function convertCrontabs() {
   this.serverless.cli.log('Converting local crontabs to UTC crontabs...');
+  const newCrontabsMap = {};
   for (const funcName in this.serverless.service.functions) {
     for (const eventIndex in this.serverless.service.functions[funcName].events) {
       const event = this.serverless.service.functions[funcName].events[eventIndex];
@@ -68,8 +69,7 @@ function convertCrontabs() {
           continue;
         // convert the local crontab to utc crontabs
         const newCrontabs = convertAwsLocalCrontabToAwsUtcCrontab(match[1], schedule.timezone);
-        // remove the original schedule event
-        this.serverless.service.functions[funcName].events.splice(eventIndex, 1);
+
         if (this.options.verbose || this.options.v) {
           this.serverless.cli.log(`Converted ${match[1]} ${schedule.timezone} to
                ${newCrontabs.join('\n               ')}`);
@@ -77,11 +77,27 @@ function convertCrontabs() {
         // remove timezone from original schedule event
         delete schedule.timezone;
         // append new utc crontab schedule events
-        this.serverless.service.functions[funcName].events.push(...newCrontabs.map((crontab) => ({
+        newCrontabsMap[funcName] = (newCrontabsMap[funcName] || {
+          newCrontabs: [],
+          removeIndexes: []
+        });
+        newCrontabsMap[funcName].removeIndexes.splice(0, 0, eventIndex);
+        newCrontabsMap[funcName].newCrontabs.push(...newCrontabs.map((crontab) => ({
           schedule: Object.assign({}, schedule, {rate: `cron(${crontab})`}),
-        })))
+        })));
       }
     }
+  }
+
+  // remove the original schedule events
+  for (const funcName in newCrontabsMap) {
+    newCrontabsMap[funcName].removeIndexes.forEach(eventIndex => {
+      this.serverless.service.functions[funcName].events.splice(eventIndex, 1);
+    });
+  }
+
+  for (const funcName in newCrontabsMap) {
+    this.serverless.service.functions[funcName].events.push(...newCrontabsMap[funcName].newCrontabs);
   }
 }
 
