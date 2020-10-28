@@ -61,15 +61,14 @@ function convertCrontabs() {
   for (const funcName in this.serverless.service.functions) {
     for (const eventIndex in this.serverless.service.functions[funcName]
       .events) {
-      const event = this.serverless.service.functions[funcName].events[
+      const schedule = this.serverless.service.functions[funcName].events[
         eventIndex
       ];
       // only process events with a schedule & a timezone
       if (
-        event.hasOwnProperty("schedule") &&
-        event.schedule.hasOwnProperty("timezone")
+        schedule.hasOwnProperty("rate") &&
+        schedule.hasOwnProperty("timezone")
       ) {
-        const schedule = event.schedule;
         const match = schedule.rate.match(/^cron\((.*)\)$/);
         if (!match)
           // skip rate() schedules
