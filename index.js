@@ -1,4 +1,5 @@
 const { localCrontabToUtcCrontabs } = require("local-crontab");
+var moment = require('moment-timezone');
 
 /**
  * Convert an AWS CloudWatch crontab to a standard crontab.
@@ -121,6 +122,16 @@ function convertCrontabs() {
 class ServerlessLocalCrontabs {
   constructor(serverless, options) {
     this.serverless = serverless;
+
+    // Create schema for your properties. For reference use https://github.com/ajv-validator/ajv
+    this.serverless.configSchemaHandler.defineFunctionEventProperties('aws', 'schedule', {
+      properties: {
+        timezone: {
+          enum: moment.tz.names(),
+        },
+      },
+    });
+
     this.options = options;
     this.hooks = {
       "before:package:initialize": convertCrontabs.bind(this)
