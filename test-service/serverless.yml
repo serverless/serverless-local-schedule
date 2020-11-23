@@ -2,10 +2,12 @@ service: test-service
 
 provider:
   name: aws
-  runtime: nodejs6.10
+  runtime: nodejs12.x
 
 plugins:
-  - serverless-local-schedule
+  localPath: '../../'
+  modules:
+    - serverless-local-schedule
 
 functions:
   hello:
