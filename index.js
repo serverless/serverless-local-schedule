@@ -70,7 +70,8 @@ function convertCrontabs() {
         event.schedule.hasOwnProperty("timezone")
       ) {
         const schedule = event.schedule;
-        const match = schedule.rate.match(/^cron\((.*)\)$/);
+        const rate = Array.isArray(schedule.rate) ? schedule.rate[0] : schedule.rate;
+        const match = rate.match(/^cron\((.*)\)$/);
         if (!match)
           // skip rate() schedules
           continue;
