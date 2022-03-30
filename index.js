@@ -122,7 +122,10 @@ function convertCrontabs() {
 class ServerlessLocalCrontabs {
   constructor(serverless, options) {
     this.serverless = serverless;
-    if (this.serverless.configSchemaHandler) {
+    if (
+      this.serverless.configSchemaHandler &&
+      this.serverless.configSchemaHandler.defineFunctionEventProperties
+    ) {
       // Create schema for your properties. For reference use https://github.com/ajv-validator/ajv
       this.serverless.configSchemaHandler.defineFunctionEventProperties('aws', 'schedule', {
         properties: {
