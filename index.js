@@ -1,5 +1,23 @@
 const { localCrontabToUtcCrontabs } = require("local-crontab");
-const { timezones } = require("timezone-enum/src/timezones.json")
+const { timezones } = require("timezone-enum/src/timezones.json");
+
+/**
+ * @typedef AwsSpecificCrontabDetails
+ * @property {String} year
+ * @property {Array<String>} questionParts
+ */
+
+/**
+ * @typedef AWSCrontabDetails
+ * @property {String} crontab
+ * @property {AwsSpecificCrontabDetails} awsSpecificDetails
+ */
+
+/**
+ * @typedef CronTabsDetails
+ * @property {Array<Number>} removeIndexes
+ * @property {Array<import("serverless/aws").Event>} newCrontabs
+ */
 
 /**
  * Convert an AWS CloudWatch crontab to a standard crontab.
@@ -11,9 +29,11 @@ const { timezones } = require("timezone-enum/src/timezones.json")
  *
  *  The data that is removed is returned as well so that it can be used to
  *  roundtrip back to an AWS CloudWatch crontab
+ * @param {String} awsCrontab
+ * @returns {AWSCrontabDetails}
  *
  */
-const convertAwsToStandardCrontab = awsCrontab => {
+const convertAwsToStandardCrontab = (awsCrontab) => {
   const crontabParts = awsCrontab.split(/\s+/);
 
   // standard crontabs don't have a year
@@ -37,6 +57,11 @@ const convertAwsToStandardCrontab = awsCrontab => {
   };
 };
 
+/**
+ * Use the information collected from previous conversion to convert back to aws crontab
+ * @param {AWSCrontabDetails} param0
+ * @returns {String}
+ */
 const convertStandardCrontabToAws = ({ crontab, awsSpecificDetails }) => {
   const parts = crontab.split(/\s+/);
   for (const questionPart of awsSpecificDetails.questionParts) {
@@ -46,18 +71,24 @@ const convertStandardCrontabToAws = ({ crontab, awsSpecificDetails }) => {
   return parts.join(" ");
 };
 
+/**
+ * @param {String} localCrontab
+ * @param {String} timezone
+ * @returns {Array<String>}
+ */
 const convertAwsLocalCrontabToAwsUtcCrontab = (localCrontab, timezone) => {
-  const { crontab, awsSpecificDetails } = convertAwsToStandardCrontab(
-    localCrontab
-  );
+  const { crontab, awsSpecificDetails } =
+    convertAwsToStandardCrontab(localCrontab);
   const utcCrontabs = localCrontabToUtcCrontabs(crontab, timezone);
-  return utcCrontabs.map(crontab =>
+  return utcCrontabs.map((crontab) =>
     convertStandardCrontabToAws({ crontab, awsSpecificDetails })
   );
 };
 
-function convertCrontabs() {
-  this.serverless.cli.log("Converting local crontabs to UTC crontabs...");
+/**
+ * @param {ServerlessLocalCrontabs} this
+ */
+function convertCrontabs(this) {
   const newCrontabsMap = {};
   for (const funcName in this.serverless.service.functions) {
     for (const eventIndex in this.serverless.service.functions[funcName]
@@ -120,22 +151,30 @@ function convertCrontabs() {
 }
 
 class ServerlessLocalCrontabs {
-  constructor(serverless, options) {
+  /**
+   * @param {import("serverless")} serverless
+   * @param {import("serverless").Options} options
+   * @param {import("serverless/classes/Plugin").Logging} param
+   */
+  constructor(serverless, options, { log }) {
     this.serverless = serverless;
     if (
       this.serverless.configSchemaHandler &&
       this.serverless.configSchemaHandler.defineFunctionEventProperties
     ) {
       // Create schema for your properties. For reference use https://github.com/ajv-validator/ajv
-      this.serverless.configSchemaHandler.defineFunctionEventProperties('aws', 'schedule', {
-        properties: {
-          timezone: {
-            enum: timezones
-          },
-        },
-      });
+      this.serverless.configSchemaHandler.defineFunctionEventProperties(
+        "aws",
+        "schedule",
+        {
+          properties: {
+            timezone: {
+              enum: timezones
+            }
+          }
+        }
+      );
     }
-
     this.options = options;
     this.hooks = {
       "before:package:initialize": convertCrontabs.bind(this)
