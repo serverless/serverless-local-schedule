@@ -89,6 +89,7 @@ const convertAwsLocalCrontabToAwsUtcCrontab = (localCrontab, timezone) => {
  * @param {ServerlessLocalCrontabs} this
  */
 function convertCrontabs(this) {
+  this.log.info("Converting local crontabs to UTC crontabs...")
   const newCrontabsMap = {};
   for (const funcName in this.serverless.service.functions) {
     for (const eventIndex in this.serverless.service.functions[funcName]
@@ -158,6 +159,29 @@ class ServerlessLocalCrontabs {
    */
   constructor(serverless, options, { log }) {
     this.serverless = serverless;
+    if (log) {
+      this.log = log
+    }
+    else if (serverless.cli.log) {
+      this.log = {
+        /**
+         * @param {String} message
+         */
+        info: (message) => {
+          serverless.cli.log(message)
+        }
+      }
+    }
+    else {
+      this.log = {
+        /**
+         * @param {String} message
+         */
+        info: (message) => {
+          console.log(message)
+        }
+      }
+    }
     if (
       this.serverless.configSchemaHandler &&
       this.serverless.configSchemaHandler.defineFunctionEventProperties
