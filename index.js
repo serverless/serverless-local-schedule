@@ -86,16 +86,37 @@ const convertAwsLocalCrontabToAwsUtcCrontab = (localCrontab, timezone) => {
 };
 
 /**
- * @param {ServerlessLocalCrontabs} this
+ * @param {String} rate
+ * @param {String} timezone
+ * @returns {Array<string> | undefined}
  */
-function convertCrontabs(this) {
-  this.log.info("Converting local crontabs to UTC crontabs...")
+const matchAndGenerateCronTabs = (rate, timezone) => {
+  const match = rate.match(/^cron\((.*)\)$/);
+  if (match) {
+    return convertAwsLocalCrontabToAwsUtcCrontab(
+      match[1],
+      timezone
+    )
+  }
+  return undefined
+}
+
+/**
+ * @param {ServerlessLocalCrontabs} plugin
+ */
+function convertCrontabs(plugin = this) {
+  /**
+   * @type {Boolean}
+   */
+  // @ts-ignore
+  const doVerboseLogging = plugin.options.verbose || plugin.options.v
+  plugin.log.info("Converting local crontabs to UTC crontabs...")
   /**
    * @type {Record<String, CronTabsDetails>}
    */
   const newCrontabsMap = {};
-  for (const funcName in this.serverless.service.functions) {
-    this.serverless.service.functions[funcName].events.forEach((event, eventIndex) => {
+  for (const funcName in plugin.serverless.service.functions) {
+    plugin.serverless.service.functions[funcName].events.forEach((event, eventIndex) => {
       // only process events with a schedule & a timezone
       if (
         event.hasOwnProperty("schedule") &&
@@ -104,26 +125,33 @@ function convertCrontabs(this) {
       ) {
         /**
          * Extending the schedule interface from aws due to this plugin
-         * @type {import("serverless/aws").Schedule & { timezone: string } }
+         * @type {import("serverless/aws").Schedule & { timezone?: string } }
          */
-        // @ts-ignore
         const schedule = event.schedule;
-        const match = schedule.rate.match(/^cron\((.*)\)$/);
-        if (!match) {
-          // convert the local crontab to utc crontabs
-          const newCrontabs = convertAwsLocalCrontabToAwsUtcCrontab(
-            match[1],
-            schedule.timezone
-          );
-
-          if (
-            this.options.verbose ||
-            // @ts-ignore
-            this.options.v
-          ) {
-            this.log.info(`Converted ${match[1]} ${schedule.timezone} to
-                 ${newCrontabs.join("\n               ")}`);
+        /**
+         * @type {String[] | String[][]}
+         */
+        let newCrontabs = [];
+        if (Array.isArray(schedule.rate)) {
+          newCrontabs = schedule.rate.map(r => {
+            const newVal = matchAndGenerateCronTabs(r, schedule.timezone)
+            if (newVal !== undefined && doVerboseLogging) {
+              plugin.log.info(
+                `Converted ${r} ${schedule.timezone} to ${newVal.join("\n               ")}`
+              );
+            }
+            return newVal
+          }).filter(r => r !== undefined)
+        }
+        else {
+          newCrontabs = matchAndGenerateCronTabs(schedule.rate, schedule.timezone)
+          if (doVerboseLogging && newCrontabs) {
+            plugin.log.info(
+              `Converted ${schedule.rate} ${schedule.timezone} to ${newCrontabs.join("\n               ")}`
+            );
           }
+        }
+        if (newCrontabs.length !== 0) {
           // remove timezone from original schedule event
           delete schedule.timezone;
           // append new utc crontab schedule events
@@ -133,12 +161,20 @@ function convertCrontabs(this) {
           };
           newCrontabsMap[funcName].removeIndexes.splice(0, 0, eventIndex);
           newCrontabsMap[funcName].newCrontabs.push(
-            ...newCrontabs.map((crontab, i) => ({
-              schedule: Object.assign({}, schedule, {
-                rate: `cron(${crontab})`,
-                name: schedule.name && `${schedule.name}-${i}`
+            ...newCrontabs.map(
+              /**
+               * 
+               * @param {String | String[]} crontab 
+               * @param {Number} i 
+               * @returns {import("serverless/plugins/aws/provider/awsProvider").Event}
+               */
+              (crontab, i) => ({
+                schedule: Object.assign({}, schedule, {
+                  rate: typeof crontab === "string" ? `cron(${crontab})` : crontab.map(c => `cron(${c})`),
+                  name: schedule.name && `${schedule.name}-${i}`
+                })
               })
-            }))
+            )
           );
         }
       }
@@ -148,12 +184,12 @@ function convertCrontabs(this) {
   // remove the original schedule events
   for (const funcName in newCrontabsMap) {
     newCrontabsMap[funcName].removeIndexes.forEach((eventIndex) => {
-      this.serverless.service.functions[funcName].events.splice(eventIndex, 1);
+      plugin.serverless.service.functions[funcName].events.splice(eventIndex, 1);
     });
   }
 
   for (const funcName in newCrontabsMap) {
-    this.serverless.service.functions[funcName].events.push(
+    plugin.serverless.service.functions[funcName].events.push(
       ...newCrontabsMap[funcName].newCrontabs
     );
   }
@@ -163,12 +199,12 @@ class ServerlessLocalCrontabs {
   /**
    * @param {import("serverless")} serverless
    * @param {import("serverless").Options} options
-   * @param {import("serverless/classes/Plugin").Logging} param
+   * @param {import("serverless/classes/Plugin").Logging | undefined} loggingModule
    */
-  constructor(serverless, options, { log }) {
+  constructor(serverless, options, loggingModule) {
     this.serverless = serverless;
-    if (log) {
-      this.log = log
+    if (loggingModule && loggingModule.log) {
+      this.log = loggingModule.log
     }
     else if (serverless.cli.log) {
       this.log = {
