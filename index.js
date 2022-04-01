@@ -90,56 +90,64 @@ const convertAwsLocalCrontabToAwsUtcCrontab = (localCrontab, timezone) => {
  */
 function convertCrontabs(this) {
   this.log.info("Converting local crontabs to UTC crontabs...")
+  /**
+   * @type {Record<String, CronTabsDetails>}
+   */
   const newCrontabsMap = {};
   for (const funcName in this.serverless.service.functions) {
-    for (const eventIndex in this.serverless.service.functions[funcName]
-      .events) {
-      const event = this.serverless.service.functions[funcName].events[
-        eventIndex
-      ];
+    this.serverless.service.functions[funcName].events.forEach((event, eventIndex) => {
       // only process events with a schedule & a timezone
       if (
         event.hasOwnProperty("schedule") &&
-        event.schedule.hasOwnProperty("timezone")
+        event.schedule.hasOwnProperty("timezone") &&
+        typeof event.schedule !== "string"
       ) {
+        /**
+         * Extending the schedule interface from aws due to this plugin
+         * @type {import("serverless/aws").Schedule & { timezone: string } }
+         */
+        // @ts-ignore
         const schedule = event.schedule;
         const match = schedule.rate.match(/^cron\((.*)\)$/);
-        if (!match)
-          // skip rate() schedules
-          continue;
-        // convert the local crontab to utc crontabs
-        const newCrontabs = convertAwsLocalCrontabToAwsUtcCrontab(
-          match[1],
-          schedule.timezone
-        );
+        if (!match) {
+          // convert the local crontab to utc crontabs
+          const newCrontabs = convertAwsLocalCrontabToAwsUtcCrontab(
+            match[1],
+            schedule.timezone
+          );
 
-        if (this.options.verbose || this.options.v) {
-          this.serverless.cli.log(`Converted ${match[1]} ${schedule.timezone} to
-               ${newCrontabs.join("\n               ")}`);
+          if (
+            this.options.verbose ||
+            // @ts-ignore
+            this.options.v
+          ) {
+            this.log.info(`Converted ${match[1]} ${schedule.timezone} to
+                 ${newCrontabs.join("\n               ")}`);
+          }
+          // remove timezone from original schedule event
+          delete schedule.timezone;
+          // append new utc crontab schedule events
+          newCrontabsMap[funcName] = newCrontabsMap[funcName] || {
+            newCrontabs: [],
+            removeIndexes: []
+          };
+          newCrontabsMap[funcName].removeIndexes.splice(0, 0, eventIndex);
+          newCrontabsMap[funcName].newCrontabs.push(
+            ...newCrontabs.map((crontab, i) => ({
+              schedule: Object.assign({}, schedule, {
+                rate: `cron(${crontab})`,
+                name: schedule.name && `${schedule.name}-${i}`
+              })
+            }))
+          );
         }
-        // remove timezone from original schedule event
-        delete schedule.timezone;
-        // append new utc crontab schedule events
-        newCrontabsMap[funcName] = newCrontabsMap[funcName] || {
-          newCrontabs: [],
-          removeIndexes: []
-        };
-        newCrontabsMap[funcName].removeIndexes.splice(0, 0, eventIndex);
-        newCrontabsMap[funcName].newCrontabs.push(
-          ...newCrontabs.map((crontab, i) => ({
-            schedule: Object.assign({}, schedule, {
-              rate: `cron(${crontab})`,
-              name: schedule.name && `${schedule.name}-${i}`
-            })
-          }))
-        );
       }
-    }
+    })
   }
 
   // remove the original schedule events
   for (const funcName in newCrontabsMap) {
-    newCrontabsMap[funcName].removeIndexes.forEach(eventIndex => {
+    newCrontabsMap[funcName].removeIndexes.forEach((eventIndex) => {
       this.serverless.service.functions[funcName].events.splice(eventIndex, 1);
     });
   }
