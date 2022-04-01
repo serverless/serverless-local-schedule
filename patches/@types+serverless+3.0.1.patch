@@ -1,0 +1,36 @@
+diff --git a/node_modules/@types/serverless/index.d.ts b/node_modules/@types/serverless/index.d.ts
+index d603124..4780c4f 100755
+--- a/node_modules/@types/serverless/index.d.ts
++++ b/node_modules/@types/serverless/index.d.ts
+@@ -17,7 +17,7 @@ import PluginManager = require('./classes/PluginManager');
+ import Utils = require('./classes/Utils');
+ import YamlParser = require('./classes/YamlParser');
+ import AwsProvider = require('./plugins/aws/provider/awsProvider');
+-import ApiGatewayValidate = require('./plugins/aws/package/compile/events/apiGateway/lib/validate');
++import { Event } from "./plugins/aws/provider/awsProvider";
+ 
+ declare namespace Serverless {
+     interface Options {
+@@ -61,9 +61,6 @@ declare namespace Serverless {
+         image: string;
+     }
+ 
+-    // Other events than ApiGatewayEvent are available
+-    type Event = ApiGatewayValidate.ApiGatewayEvent | object;
+-
+     interface Package {
+         /** @deprecated use `patterns` instead */
+         include?: string[] | undefined;
+diff --git a/node_modules/@types/serverless/plugins/aws/provider/awsProvider.d.ts b/node_modules/@types/serverless/plugins/aws/provider/awsProvider.d.ts
+index cd0df2c..b811fa9 100755
+--- a/node_modules/@types/serverless/plugins/aws/provider/awsProvider.d.ts
++++ b/node_modules/@types/serverless/plugins/aws/provider/awsProvider.d.ts
+@@ -401,7 +401,7 @@ declare namespace Aws {
+     interface Schedule {
+         name?: string | undefined;
+         description?: string | undefined;
+-        rate: string;
++        rate: string | Array<string>;
+         enabled?: boolean | undefined;
+         input?: Input | undefined;
+         inputPath?: string | undefined;
