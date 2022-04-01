@@ -20,3 +20,8 @@ functions:
       - schedule:
           rate: cron(0 5 * * ? *)
           timezone: America/New_York
+      - schedule:
+          rate:
+            - cron(0 5 * * ? *)
+            - cron(0 6 * * ? *)
+          timezone: America/New_York
