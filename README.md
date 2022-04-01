@@ -1,24 +1,28 @@
 # Serverless Local Schedule
+
 [![serverless](http://public.serverless.com/badges/v3.svg)](http://www.serverless.com)
 [![npm](https://img.shields.io/npm/v/serverless-local-schedule.svg)](https://www.npmjs.com/package/serverless-local-schedule)
 
 This plugin allows you to specify a timezone on your lambdas triggered by AWS CloudWatch Events.
 
---- 
+---
 
 _Originally developed by [**Capital One**](https://www.capitalone.com/tech/open-source/), now maintained in scope of Serverless, Inc_
 
 _Capital One considers itself the bank a technology company would build. It's delivering best-in-class innovation so that its millions of customers can manage their finances with ease. Capital One is all-in on the cloud and is a leader in the adoption of open source, RESTful APIs, microservices and containers. We build our own products and release them with a speed and agility that allows us to get new customer experiences to market quickly. Our engineers use artificial intelligence and machine learning to transform real-time data, software and algorithms into the future of finance, reimagined._
 
---- 
+---
 
 ## Install
 
-```
+```bash
 sls plugin install -n serverless-local-schedule
 ```
 
+## Usage
+
 For example:
+
 ```yaml
 functions:
   hello:
@@ -31,6 +35,7 @@ functions:
 
 It works by converting that into 6 different schedules, effectively the same as having the following
 configuration:
+
 ```yaml
 functions:
   hello:
