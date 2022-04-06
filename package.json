@@ -31,8 +31,13 @@
     "timezone-enum": "^1.0.1"
   },
   "devDependencies": {
+    "@semantic-release/commit-analyzer": "^9.0.2",
+    "@semantic-release/npm": "^9.0.1",
+    "@semantic-release/release-notes-generator": "^10.0.3",
     "@types/serverless": "^3.0.1",
+    "conventional-changelog-conventionalcommits": "^4.6.3",
     "patch-package": "^6.4.7",
-    "prettier": "*"
+    "prettier": "*",
+    "semantic-release": "^19.0.2"
   }
 }
