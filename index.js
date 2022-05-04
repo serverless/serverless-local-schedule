@@ -71,20 +71,29 @@ function convertCrontabs() {
         event.schedule.hasOwnProperty("timezone")
       ) {
         const schedule = event.schedule;
-        const match = schedule.rate.match(/^cron\((.*)\)$/);
-        if (!match)
+        const rates = Array.isArray(schedule.rate) ? schedule.rate : [schedule.rate];
+        const matches = rates
+          .map(rate => rate.match(/^cron\((.*)\)$/))
+          .filter(match => match && match[1])
+
+        if (!matches.length)
           // skip rate() schedules
           continue;
         // convert the local crontab to utc crontabs
-        const newCrontabs = convertAwsLocalCrontabToAwsUtcCrontab(
-          match[1],
-          schedule.timezone
-        );
+        const newCrontabs = matches.flatMap(match => {
+          const convertedCrontabs = convertAwsLocalCrontabToAwsUtcCrontab(
+            match[1],
+            schedule.timezone
+          );
 
-        if (this.options.verbose || this.options.v) {
-          this.serverless.cli.log(`Converted ${match[1]} ${schedule.timezone} to
-               ${newCrontabs.join("\n               ")}`);
-        }
+          if (this.options.verbose || this.options.v) {
+            this.serverless.cli.log(`Converted ${match[1]} ${schedule.timezone} to
+               ${convertedCrontabs.join("\n               ")}`);
+          }
+
+          return convertedCrontabs;
+        })
+
         // remove timezone from original schedule event
         delete schedule.timezone;
         // append new utc crontab schedule events
@@ -97,7 +106,6 @@ function convertCrontabs() {
           ...newCrontabs.map((crontab, i) => ({
             schedule: Object.assign({}, schedule, {
               rate: `cron(${crontab})`,
-              name: schedule.name && `${schedule.name}-${i}`
             })
           }))
         );
