@@ -71,7 +71,9 @@ function convertCrontabs() {
         event.schedule.hasOwnProperty("timezone")
       ) {
         const schedule = event.schedule;
-        const rates = Array.isArray(schedule.rate) ? schedule.rate : [schedule.rate];
+        const isNewServerlessVersion = Array.isArray(schedule.rate);
+
+        const rates = isNewServerlessVersion ? schedule.rate : [schedule.rate];
         const matches = rates
           .map(rate => rate.match(/^cron\((.*)\)$/))
           .filter(match => match && match[1])
@@ -103,11 +105,16 @@ function convertCrontabs() {
         };
         newCrontabsMap[funcName].removeIndexes.splice(0, 0, eventIndex);
         newCrontabsMap[funcName].newCrontabs.push(
-          ...newCrontabs.map((crontab, i) => ({
-            schedule: Object.assign({}, schedule, {
-              rate: `cron(${crontab})`,
-            })
-          }))
+          ...newCrontabs.map((crontab, i) => {
+            const addName = !isNewServerlessVersion && schedule.name;
+
+            return ({
+              schedule: Object.assign({}, schedule, {
+                rate: `cron(${crontab})`,
+                name: addName ? `${schedule.name}-${i}` : undefined,
+              })
+            });
+          })
         );
       }
     }
