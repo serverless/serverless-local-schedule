@@ -71,9 +71,9 @@ function convertCrontabs() {
         event.schedule.hasOwnProperty("timezone")
       ) {
         const schedule = event.schedule;
-        const isNewServerlessVersion = Array.isArray(schedule.rate);
+        const ratesAreArray = Array.isArray(schedule.rate);
 
-        const rates = isNewServerlessVersion ? schedule.rate : [schedule.rate];
+        const rates = ratesAreArray ? schedule.rate : [schedule.rate];
         const matches = rates
           .map(rate => rate.match(/^cron\((.*)\)$/))
           .filter(match => match && match[1])
@@ -106,7 +106,10 @@ function convertCrontabs() {
         newCrontabsMap[funcName].removeIndexes.splice(0, 0, eventIndex);
         newCrontabsMap[funcName].newCrontabs.push(
           ...newCrontabs.map((crontab, i) => {
-            const addName = !isNewServerlessVersion && schedule.name;
+            // When the rates are an array, the version of Serverless being used
+            // is one that doesn't support named schedules when there are multiple
+            // schedules or rates. See https://github.com/serverless/serverless/issues/9867 for details.
+            const addName = !ratesAreArray && schedule.name;
 
             return ({
               schedule: Object.assign({}, schedule, {
