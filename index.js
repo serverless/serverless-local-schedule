@@ -113,7 +113,7 @@ function convertCrontabs() {
 
             return ({
               schedule: Object.assign({}, schedule, {
-                rate: `cron(${crontab})`,
+                rate: ratesAreArray ? [`cron(${crontab})`] : `cron(${crontab})`,
                 name: addName ? `${schedule.name}-${i}` : undefined,
               })
             });
