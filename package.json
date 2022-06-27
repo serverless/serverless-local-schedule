@@ -1,6 +1,6 @@
 {
   "name": "serverless-local-schedule",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Allows defining CloudWatch schedules in local timezones(with DST!) in serverless events",
   "main": "index.js",
   "scripts": {
